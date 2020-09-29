@@ -37,7 +37,6 @@ class ReplayBuffer:
         self.size = min(self.size + 1, self.max_size)
 
     def sample_batch(self) -> Dict[str, np.ndarray]:
-        print("[debug]:",self.size, self.batch_size)
         idxs = np.random.choice(self.size, size=self.batch_size, replace=False)
         return dict(obs=self.obs_buf[idxs],
                     next_obs=self.next_obs_buf[idxs],
@@ -65,7 +64,7 @@ class Network(nn.Module):
         """Forward method implementation."""
         return self.layers(x)
 
-class DQNAgent:
+class DoubleDQNAgent:
     """DQN Agent interacting with environment.
     
     Attribute:
@@ -176,7 +175,7 @@ class DQNAgent:
         self.transition = [state, selected_action]
         
         return selected_action
-    
+
     def storeTransition(self, reward, next_state, done) -> Tuple[np.float64, np.ndarray, bool]: # new
         self.transition += [reward, next_state, done]
         self.memory.store(*self.transition)
@@ -194,29 +193,27 @@ class DQNAgent:
         return loss.item()
         
     def trainStep(self):
-        print("[Train DQN]")
+        print("[Train DoubleDQN]")
         """Train the agent."""
         self.is_test = False
-        
+
         # if training is ready
         if len(self.memory) >= self.batch_size:
-            # assert 1==0
-        # if True and len(self.memory)>0:
+        # if True:
             loss = self.update_model()
             self.update_cnt += 1
                 
             # linearly decrease epsilon
             self.epsilon = max(
                 self.min_epsilon, self.epsilon - (
-                self.max_epsilon - self.min_epsilon
+                    self.max_epsilon - self.min_epsilon
                 ) * self.epsilon_decay
             )
-                
+            
             # if hard update is needed
-            if  self.update_cnt % self.target_update == 0:
+            if self.update_cnt % self.target_update == 0:
                 self._target_hard_update()
             self.save("")
-                
 
     def _compute_dqn_loss(self, samples: Dict[str, np.ndarray]) -> torch.Tensor:
         """Return dqn loss."""
@@ -226,13 +223,13 @@ class DQNAgent:
         action = torch.LongTensor(samples["acts"].reshape(-1, 1)).to(device)
         reward = torch.FloatTensor(samples["rews"].reshape(-1, 1)).to(device)
         done = torch.FloatTensor(samples["done"].reshape(-1, 1)).to(device)
-
+        
         # G_t   = r + gamma * v(s_{t+1})  if state != Terminal
         #       = r                       otherwise
         curr_q_value = self.dqn(state).gather(1, action)
-        next_q_value = self.dqn_target(
-            next_state
-        ).max(dim=1, keepdim=True)[0].detach()
+        next_q_value = self.dqn_target(next_state).gather(  # Double DQN
+            1, self.dqn(next_state).argmax(dim=1, keepdim=True)
+        ).detach()
         mask = 1 - done
         target = (reward + self.gamma * next_q_value * mask).to(self.device)
 
@@ -240,10 +237,10 @@ class DQNAgent:
         loss = F.smooth_l1_loss(curr_q_value, target)
 
         return loss
-
+    
     def _target_hard_update(self):
         """Hard update: target <- local."""
-        #self.dqn_target.load_state_dict(self.dqn.state_dict())
+        self.dqn_target.load_state_dict(self.dqn.state_dict())
         self.load("")
     def load(self, path):
         """
@@ -251,8 +248,8 @@ class DQNAgent:
         :param path: path where the models are saved
         :return: None
         """
-        dqn_state_dict = load(path + '_dqn.pkl')
-        dqn_target_state_dict = load(path + '_dqn_target.pkl')
+        dqn_state_dict = load(path + '_doubledqn.pkl')
+        dqn_target_state_dict = load(path + '_doubledqn_target.pkl')
         self.dqn.load_state_dict(dqn_state_dict)
         self.dqn_target.load_state_dict(dqn_target_state_dict)
     
@@ -262,7 +259,5 @@ class DQNAgent:
         :param path: path to save the models
         :return: None
         """
-        save(self.dqn.state_dict(), path + '_dqn.pkl')
-        save(self.dqn_target.state_dict(), path + '_dqn_target.pkl')
-
-          
+        save(self.dqn.state_dict(), path + '_doubledqn.pkl')
+        save(self.dqn_target.state_dict(), path + '_doubledqn_target.pkl')

@@ -4,6 +4,7 @@ from PPOAgent import PPOAgent, Transition
 from utilities import normalizeToRange
 
 from DQNAgent import DQNAgent
+from DoubleDQNAgent import DoubleDQNAgent
 
 class CartPoleSupervisor(SupervisorCSV):
 	def __init__(self):
@@ -94,6 +95,7 @@ class CartPoleSupervisor(SupervisorCSV):
 supervisor = CartPoleSupervisor()
 agentPPO = PPOAgent(supervisor.observationSpace, supervisor.actionSpace)
 agnetDQN = DQNAgent(supervisor.observationSpace, supervisor.actionSpace)
+agnetDoubleDQN = DoubleDQNAgent(supervisor.observationSpace, supervisor.actionSpace)
 solved = False
 # Run outer loop until the episodes limit is reached or the task is solved
 while not solved and supervisor.episodeCount < supervisor.episodeLimit:
@@ -104,7 +106,8 @@ while not solved and supervisor.episodeCount < supervisor.episodeLimit:
 		# In training mode the agentPPO samples from the probability distribution, naturally implementing exploration
 		selectedAction, actionProb = agentPPO.work(observation, type_="selectAction")
 		selectedActionDQN = agnetDQN.work(observation)
-		selectedAction = selectedActionDQN
+		selectedActionDoubleDQN = agnetDoubleDQN.work(observation)
+		selectedAction = selectedActionDoubleDQN
 		print("selectedAction:",selectedAction)
 		print("selectedDQN:",selectedActionDQN)
 		# Step the supervisor to get the current selectedAction's reward, the new observation and whether we reached 
@@ -116,7 +119,7 @@ while not solved and supervisor.episodeCount < supervisor.episodeLimit:
 		print("trans:",trans)
 		agentPPO.storeTransition(trans)
 		agnetDQN.storeTransition(reward, newObservation, done)
-		
+		agnetDoubleDQN.storeTransition(reward, newObservation, done)
 
 		if done:
 			# Save the episode's score
@@ -125,6 +128,7 @@ while not solved and supervisor.episodeCount < supervisor.episodeLimit:
 			solved = supervisor.solved()  # Check whether the task is solved
 
 			agnetDQN.trainStep()
+			agnetDoubleDQN.trainStep()
 			break
 
 		
