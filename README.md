@@ -19,6 +19,8 @@
 3. DoubleDQN
 > [van Hasselt et al., "Deep Reinforcement Learning with Double Q-learning." arXiv preprint arXiv:1509.06461, 2015.](https://arxiv.org/pdf/1509.06461.pdf)
 
+TBC...
+
 ### Obsercation
 To do better than take random actions at each step, we ant to know what our actions are doing to the environment.
 The environment’s <code>supervisor.step</code> function returns exactly what we need. In fact, step returns four values. These are:
