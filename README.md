@@ -10,3 +10,19 @@
 
 4. Clone this repository by running the following command:\
 <code>git clone https://github.com/KelvinYang0320/deepbots-RL-agent.git</code>
+
+### Reinforcement Learning Algorithn
+1. PPO
+> https://openai.com/blog/openai-baselines-ppo/
+2. DQN
+> [V. Mnih et al., "Human-level control through deep reinforcement learning." Nature, 518 (7540):529–533, 2015.](https://storage.googleapis.com/deepmind-media/dqn/DQNNaturePaper.pdf)
+3. DoubleDQN
+> [van Hasselt et al., "Deep Reinforcement Learning with Double Q-learning." arXiv preprint arXiv:1509.06461, 2015.](https://arxiv.org/pdf/1509.06461.pdf)
+
+### Obsercation
+To do better than take random actions at each step, we ant to know what our actions are doing to the environment.
+The environment’s <code>supervisor.step</code> function returns exactly what we need. In fact, step returns four values. These are:
+* <code>observation</code> (object): an environment-specific object representing your observation of the environment.
+* <code>reward</code> (float): amount of reward achieved by the previous action. The scale varies between environments, but the goal is always to increase your total reward.
+* <code>done</code> (boolean): whether it’s time to reset the environment again. Most (but not all) tasks are divided up into well-defined episodes, and done being True indicates the episode has terminated. (For example, perhaps the pole tipped too far, or you lost your last life.)
+* <code>info</code> (dict): diagnostic information useful for debugging.
