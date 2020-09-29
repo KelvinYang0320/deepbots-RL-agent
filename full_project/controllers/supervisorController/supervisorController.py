@@ -89,7 +89,7 @@ class CartPoleSupervisor(SupervisorCSV):
 		
 	def get_info(self):
 		return None
-		
+
 
 supervisor = CartPoleSupervisor()
 agentPPO = PPOAgent(supervisor.observationSpace, supervisor.actionSpace)
@@ -104,6 +104,7 @@ while not solved and supervisor.episodeCount < supervisor.episodeLimit:
 		# In training mode the agentPPO samples from the probability distribution, naturally implementing exploration
 		selectedAction, actionProb = agentPPO.work(observation, type_="selectAction")
 		selectedActionDQN = agnetDQN.work(observation)
+		selectedAction = selectedActionDQN
 		print("selectedAction:",selectedAction)
 		print("selectedDQN:",selectedActionDQN)
 		# Step the supervisor to get the current selectedAction's reward, the new observation and whether we reached 
@@ -114,15 +115,16 @@ while not solved and supervisor.episodeCount < supervisor.episodeLimit:
 		trans = Transition(observation, selectedAction, actionProb, reward, newObservation)
 		print("trans:",trans)
 		agentPPO.storeTransition(trans)
-
 		agnetDQN.storeTransition(reward, newObservation, done)
-		agnetDQN.trainStep()
+		
 
 		if done:
 			# Save the episode's score
 			supervisor.episodeScoreList.append(supervisor.episodeScore)
 			agentPPO.trainStep(batchSize=step)
 			solved = supervisor.solved()  # Check whether the task is solved
+
+			agnetDQN.trainStep()
 			break
 
 		

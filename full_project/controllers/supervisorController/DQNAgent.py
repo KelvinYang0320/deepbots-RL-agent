@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-
+from torch import save, load
 class ReplayBuffer:
     """A simple numpy replay buffer."""
 
@@ -148,6 +148,19 @@ class DQNAgent:
         # for trainStep
         self.update_cnt = 0
 
+        # DQN: Set random seed
+        seed = 777
+
+        def seed_torch(seed):
+            torch.manual_seed(seed)
+            if torch.backends.cudnn.enabled:
+                torch.backends.cudnn.benchmark = False
+                torch.backends.cudnn.deterministic = True
+
+        np.random.seed(seed)
+        seed_torch(seed)
+        # DEN ---------
+
     def work(self, state: np.ndarray) -> np.ndarray:
         """Select an action from the input state."""
         # epsilon greedy policy
@@ -180,11 +193,13 @@ class DQNAgent:
         return loss.item()
         
     def trainStep(self):
+        print("[Train DQN]")
         """Train the agent."""
         self.is_test = False
         
         # if training is ready
-        if len(self.memory) >= self.batch_size:
+        # if len(self.memory) >= self.batch_size:
+        if True:
             loss = self.update_model()
             self.update_cnt += 1
                 
@@ -198,6 +213,7 @@ class DQNAgent:
             # if hard update is needed
             if  self.update_cnt % self.target_update == 0:
                 self._target_hard_update()
+            self.save("")
                 
 
     def _compute_dqn_loss(self, samples: Dict[str, np.ndarray]) -> torch.Tensor:
@@ -225,5 +241,26 @@ class DQNAgent:
 
     def _target_hard_update(self):
         """Hard update: target <- local."""
-        self.dqn_target.load_state_dict(self.dqn.state_dict())
-                
+        #self.dqn_target.load_state_dict(self.dqn.state_dict())
+        self.load("")
+    def load(self, path):
+        """
+        Load actor and critic models from the path provided.
+        :param path: path where the models are saved
+        :return: None
+        """
+        dqn_state_dict = load(path + '_dqn.pkl')
+        dqn_target_state_dict = load(path + '_dqn_target.pkl')
+        self.dqn.load_state_dict(dqn_state_dict)
+        self.dqn_target.load_state_dict(dqn_target_state_dict)
+    
+    def save(self, path):
+        """
+        Save actor and critic models in the path provided.
+        :param path: path to save the models
+        :return: None
+        """
+        save(self.dqn.state_dict(), path + '_dqn.pkl')
+        save(self.dqn_target.state_dict(), path + '_dqn_target.pkl')
+
+          

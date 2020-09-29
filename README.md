@@ -7,3 +7,6 @@
     * Follow the Using Python guide provided by Webots
 3. Install deepbots through pip running the following command:\
 <code>pip install deepbots</code>
+
+4. Clone this repository by running the following command:\
+<code>git clone https://github.com/KelvinYang0320/deepbots-RL-agent.git</code>
