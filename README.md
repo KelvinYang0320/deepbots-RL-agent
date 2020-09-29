@@ -21,6 +21,8 @@
 
 TBC...
 
+reference: https://github.com/Curt-Park/rainbow-is-all-you-need
+
 ### Obsercation
 To do better than take random actions at each step, we ant to know what our actions are doing to the environment.
 The environment’s <code>supervisor.step</code> function returns exactly what we need. In fact, step returns four values. These are:
